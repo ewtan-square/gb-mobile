@@ -1,0 +1,29 @@
+@import "globals";
+
+div.vertical-center {
+	position: absolute;
+	top: 50%;
+	height:1px;
+	width:100%;
+	overflow: visible;
+}
+
+div.viewport-container {
+	position: absolute;
+	height: $HEIGHT;
+	width:  $WIDTH;
+	left:50%;
+	margin-left: -($WIDTH / 2);
+	margin-top:  -($HEIGHT / 2);
+	text-align: center;
+}
+
+h1 {
+	font-family: "Trebuchet MS", Helvetica, sans-serif;
+	font-size: 18px;
+}
+
+p {
+	font-family: "Trebuchet MS", Helvetica, sans-serif;
+	font-size: 11px;
+}

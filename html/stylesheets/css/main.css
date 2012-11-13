@@ -1,0 +1,23 @@
+div.vertical-center {
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  width: 100%;
+  overflow: visible; }
+
+div.viewport-container {
+  position: absolute;
+  height: 600px;
+  width: 800px;
+  left: 50%;
+  margin-left: -400px;
+  margin-top: -300px;
+  text-align: center; }
+
+h1 {
+  font-family: "Trebuchet MS", Helvetica, sans-serif;
+  font-size: 18px; }
+
+p {
+  font-family: "Trebuchet MS", Helvetica, sans-serif;
+  font-size: 11px; }

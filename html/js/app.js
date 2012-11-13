@@ -1,3 +1,6 @@
+var include = function(path){ document.write('<script type="text/javascript" src="'+path+'"></script>'); };
+include("js/game.js");
+
 var ctx;
 
 // Colors
@@ -21,11 +24,18 @@ var setup = function() {
 };
 
 
-// Initialize canvas functions for the viewport
+// Initialize
 var init = function() {
+	// Canvas functions for the viewport
 	debug("Initializing the canvas");
 	var vp = document.getElementById("viewport");
 	ctx = vp.getContext("2d");
+	
+	// Game modules 
+	Game.init();
+	// Sprite.init();    something for characters
+	// Projectile.init    something for bullets. Physics.init? or build this into Projectile?
+	
 	blank(CORNFLOWER_BLUE);
 };
 

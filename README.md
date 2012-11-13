@@ -1,4 +1,3 @@
-gb-mobile
+"Nureyev"
 =========
-
-We're going to coding the gunbound mobile version
+A fun little game, coded using HTML5 canvas.

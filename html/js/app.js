@@ -1,5 +1,8 @@
 var include = function(path){ document.write('<script type="text/javascript" src="'+path+'"></script>'); };
+
+include(USE_LOCAL_LIBS ? "js/lib/jquery.min.js" : "http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js");
 include("js/game.js");
+include("js/map.js");
 
 var ctx;
 
@@ -16,11 +19,11 @@ var debug = function(s) {
 // Setup the HTML of the viewport for use
 // Does not perform any canvas interaction
 var setup = function() {
-	var $vp = $("#viewport");
+	var vp = document.getElementById("viewport");
 	debug("Setup viewport(" + VIEWPORT_WIDTH + " x " + VIEWPORT_HEIGHT + ")");
 
-	$vp.width(VIEWPORT_WIDTH);
-	$vp.height(VIEWPORT_HEIGHT);
+	vp.width = VIEWPORT_WIDTH;
+	vp.height = VIEWPORT_HEIGHT;
 };
 
 
@@ -33,10 +36,9 @@ var init = function() {
 	
 	// Game modules 
 	Game.init();
+	Map.init();
 	// Sprite.init();    something for characters
 	// Projectile.init    something for bullets. Physics.init? or build this into Projectile?
-	
-	blank(CORNFLOWER_BLUE);
 };
 
 
@@ -46,10 +48,25 @@ var blank = function(color) {
 	ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 }
 
-$("document").ready(function() {
-	
+// Call setup and init when content is loaded
+var addListener = function(obj, eventName, listener) {
+	if(obj.addEventListener) {
+		obj.addEventListener(eventName, listener, false);
+	} else {
+		obj.attachEvent("on" + eventName, listener);
+	}
+}
+
+if(!window.addEventListener) {
+	document.getElementById('DCL').innerHTML = "(not supported)";
+}
+
+// addListener(window, "load", function() { // might want to use this if we're waiting for images to load
+addListener(document, "DOMContentLoaded", function() {
 	setup();
-
 	init();
-
 });
+
+
+
+    

@@ -1,28 +1,37 @@
-// class Game
-
+// WormBound
 //
-// Systems
 /*
-	@TODO document input, tick, rendering system
 
+	This first prototype of our worms clone is hotseat multiplayer (in one browser).
+	Each player, in turn, goes through their squad of pawns, issuing moves and firing.
+	
+	Game.tick is the main game loop. This checks input, updates actors, and renders
+	depending on which phase we're in (should totally have a matinee roll in announcing that)
+
+	Configuration and design notes
+	- global constants (and game tuning values eventually) are in index.html
+	
+	- var Classname   at the top of a file indicates a singleton class, a manager (Game, Map..)
+	- function Classname(param1[, param2]*)   at the top of a file indicates a class (see
+	  http://www.crockford.com/javascript/inheritance.html for the design pattern )
+	  
+	- collision is documented in the map class
 */
 
 
 var Game = new function(){
-	this.canvasBuffer;
-	this.canvasBufferContext;
-	this.players;
-	this.currentPlayerIndex; // whose turn is it?
-	this.keyDown;
-	this.testPlayer;
-	this.consts_movePixelsPerTick;
+	this.currentPlayerIndex = 0;
+	this.players = [];
+	this.keyDown = [];
+	this.buffer = {};
+	this.bufferContext = {};
 	
 	this.init = function(){
 		debug("Initializing Game");
 		
 		// Create buffer (reduce flickering)
-		this.loadCanvasBuffer();
-		if (!this.canvasBufferContext)
+		this.loadbuffer();
+		if (!this.bufferContext)
 			return;
 
 		// Bind the input handlers
@@ -51,7 +60,10 @@ var Game = new function(){
 			x: VIEWPORT_WIDTH / 2.0,
 			y: VIEWPORT_HEIGHT / 2.0
 		}
-		Game.consts_movePixelsPerTick = (function(){ return 1.0; })();
+		for (var i = 0; i < 1; ++i) {
+			Game.players.push( new Pawn( "player_"+i ) );
+			console.log(Game.players[i].getName() + " created");
+;		}
 		
 		// CPU-efficient render loop http://nokarma.org/2011/02/02/javascript-game 
 		// -development-the-game-loop/index.html (must.. wrap.. lines)
@@ -76,12 +88,12 @@ var Game = new function(){
 		onEachFrame(Game.tick);
 	};
 	
-	this.loadCanvasBuffer = function(){
+	this.loadbuffer = function(){
 		if (ctx) {
-			Game.canvasBuffer = document.createElement('canvas');
-			Game.canvasBuffer.width = VIEWPORT_WIDTH;
-			Game.canvasBuffer.height = VIEWPORT_HEIGHT;
-			Game.canvasBufferContext = Game.canvasBuffer.getContext('2d');
+			Game.buffer = document.createElement('canvas');
+			Game.buffer.width = VIEWPORT_WIDTH;
+			Game.buffer.height = VIEWPORT_HEIGHT;
+			Game.bufferContext = Game.buffer.getContext('2d');
 		}
 	};
 	
@@ -139,43 +151,31 @@ var Game = new function(){
 	};
 
 	this.draw = function(){
-		Map.buffer(Game.canvasBufferContext);
+		Map.buffer(Game.bufferContext);
 		
-		for (var i = 0; i < Game.players; ++i) {
-			// players[i].sprite.buffer(this.canvasBufferContext);
-		}
+		for (var i = 0; i < Game.players.length; ++i) {
+			Game.players[i].buffer(Game.bufferContext);
+;		}
 		
 		for (var i = 0; i < Game.projectiles; ++i) {
-			// projectiles[i].buffer(this.canvasBufferContext);
+			// projectiles[i].buffer(this.bufferContext);
 		}
-		
-		// render stand-in player
-		Game.canvasBufferContext.beginPath();
-		var x              = Game.testPlayer.x; //Math.floor();
-		var y              = Game.testPlayer.y; //Math.floor();
-		var radius         = 20;
-		var startAngle     = 0;
-		var endAngle       = 2*Math.PI;
-		var anticlockwise  = false;
-		
-		Game.canvasBufferContext.arc(x,y,radius,startAngle,endAngle, anticlockwise);
-		Game.canvasBufferContext.closePath();
-		Game.canvasBufferContext.stroke();
-		
-		ctx.drawImage(Game.canvasBuffer, 0, 0);
+		ctx.drawImage(Game.buffer, 0, 0);
 	};
 	
 	this.tick = function(){
-		//@TODO: check with the Map to see if we can move there. maybe encapsulate that
-		//       in a player class or something.
+		var deltaX = 0.0, deltaY = 0.0;
 		if (Game.input.left)
-			Game.testPlayer.x -= Game.consts_movePixelsPerTick;
+			deltaX -= 2; //Config.movePixelsPerTick();
 		if (Game.input.right)
-			Game.testPlayer.x += Game.consts_movePixelsPerTick;
+			deltaX += 2; //Config.movePixelsPerTick();
 		if (Game.input.up)
-			Game.testPlayer.y -= Game.consts_movePixelsPerTick;
+			deltaY -= 2; //Config.movePixelsPerTick();
 		if (Game.input.down)
-			Game.testPlayer.y += Game.consts_movePixelsPerTick;
+			deltaY += 2; //Config.movePixelsPerTick();
+			
+		Game.players[Game.currentPlayerIndex].tryMove(deltaX, deltaY);
+		
 
 		// Map.tick; // @TODO: for gravity with collision checks
 		

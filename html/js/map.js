@@ -1,6 +1,6 @@
-// class Map
+
+
 var Map = new function(){
-	var self = this;
 	this.collisionMap = { loaded: false, blackAtXY: function(x,y) {} };
 	
 	this.init = function(){
@@ -16,6 +16,14 @@ var Map = new function(){
 		canvas.width = VIEWPORT_WIDTH;
 		canvas.height = VIEWPORT_HEIGHT;
 		
+		/*
+				Idea for collision: if moving right, for example, scan the
+				rightmost column of the pixels of the movers "collisioncapsule"
+				image. if the pixel is black, check the pixel to its right. if
+				that pixel is also black, then we have a collision, and the move
+				should be interrupted.
+		*/
+		
 		// Load the example map (hardcoded for now)
 		var img = new Image();
 		img.onload = function(){
@@ -23,37 +31,36 @@ var Map = new function(){
 			if (loadContext)
 			{
 				loadContext.drawImage(img,0,0);
-				self.collisionMap.imageData = loadContext.getImageData(0, 0, canvas.width, canvas.height);
-				self.collisionMap.blackAtXY = function(x,y) {
+				Map.collisionMap.imageData = loadContext.getImageData(0, 0, canvas.width, canvas.height);
+				Map.collisionMap.blackAtXY = function(x,y) {
 					// #rob i'd rather find somewhere better/elsewhere to define this, but w.e. refactor later
 					// Check R
-					if ( self.collisionMap.imageData.data[((y*(imageData.width*4)) + (x*4)) + 0] > 0)
+					if ( Map.collisionMap.imageData.data[((y*(imageData.width*4)) + (x*4)) + 0] > 0.0)
 						return false;
 					
 					// Check G
-					if ( self.collisionMap.imageData.data[((y*(imageData.width*4)) + (x*4)) + 1] > 0)
+					if ( Map.collisionMap.imageData.data[((y*(imageData.width*4)) + (x*4)) + 1] > 0.0)
 						return false;
 					
 					// Check B
-					if ( self.collisionMap.imageData.data[((y*(imageData.width*4)) + (x*4)) + 2] > 0)
+					if ( Map.collisionMap.imageData.data[((y*(imageData.width*4)) + (x*4)) + 2] > 0.0)
 						return false;
 					
 					// Check A
-					//if ( self.collisionMap.imageData.data[((y*(imageData.width*4)) + (x*4)) + 3] > 0)
-					//	return whatever;
+					if ( Map.collisionMap.imageData.data[((y*(imageData.width*4)) + (x*4)) + 3] < 1.0)
+						return false;
 					
 					return true;
 				};
-				self.collisionMap.loaded = true;
+				Map.collisionMap.loaded = true;
 			}
 		};
-		img.src = 'assets/maptest.png';
-		// Note for the above line to succeed, you must be running a local server
+		img.src = 'assets/maptest.png'; // Note this will throw a CORS error without a server
 	};
 	
-	this.buffer = function(canvasBufferContext){
+	this.buffer = function(bufferContext){
 		// For now, just print the collision map. this will be a useful debugging tool later too
-		if (this.collisionMap.loaded)
-			canvasBufferContext.putImageData( self.collisionMap.imageData, 0, 0);
+		if (Map.collisionMap.loaded)
+			bufferContext.putImageData( Map.collisionMap.imageData, 0, 0);
 	}
 }

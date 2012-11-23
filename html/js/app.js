@@ -1,6 +1,16 @@
 var include = function(path){ document.write('<script type="text/javascript" src="'+path+'"></script>'); };
 
+/* Libraries */
 include(USE_LOCAL_LIBS ? "js/lib/jquery.min.js" : "http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js");
+include("js/lib/inheritance.js");
+
+/* Configuration */
+include("js/config.js");
+
+/* Classes */
+include("js/pawn.js");
+
+/* Singletons */
 include("js/game.js");
 include("js/map.js");
 
@@ -66,7 +76,6 @@ addListener(document, "DOMContentLoaded", function() {
 	setup();
 	init();
 });
-
 
 
     

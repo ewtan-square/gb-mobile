@@ -26,6 +26,15 @@ var debug = function(s) {
 	}
 }
 
+// Spins for n milliseconds, used to view canvas animation (or w.e) frame-by-frame for debugging
+// @todo: anything that isnt spinning
+var debugWait = function(milliseconds) {
+	var date = new Date();
+	var curDate = null;
+	do { curDate = new Date(); }
+	while(curDate-date < milliseconds);
+}
+
 // Setup the HTML of the viewport for use
 // Does not perform any canvas interaction
 var setup = function() {

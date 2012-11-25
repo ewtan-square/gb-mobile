@@ -1,12 +1,25 @@
 
 
 function Pawn(name) {
+	debug("Initializing " + name);
+	this.loaded = false;
+	this.simulatingPhysics = false;
     this.setName(name);
 	this.x = VIEWPORT_WIDTH / 2.0;
 	this.y = VIEWPORT_HEIGHT / 2.0;
-	// this.collisionCapsuleImage; // this will have a black outline of
-	// the colliding outline of the sprite, for collision checks with the
-	// map
+	
+	// NOTE: velocity, acceleration are still with respect to top-left origin
+	// (i.e. positive y velocity will move the actor "downwards" on-screen)
+	this.velocity = { x: 0.0, y: -370.0 };
+	
+	this.collisionImage = new Image();
+	
+	// load collision bounds image
+	var self = this;
+	this.collisionImage.onload = function(){
+		self.loaded = true;
+	};
+	this.collisionImage.src = 'assets/pawncollision.png';
 }
 
 Pawn.method('setName', function(name){
@@ -18,34 +31,35 @@ Pawn.method('getName', function(){
     return this.name;
 });
 
-Pawn.method('whatsMyName', function(){
-    return 'Champion bad-ass, ' + this.getName();
-});
-
-Pawn.method('tryMove', function(deltaX, deltaY){
+// Returns true if the move succeeded, else false
+Pawn.method('move', function(deltaX, deltaY){
     // @todo: check for collision with the map
 	this.x += deltaX;
 	this.y += deltaY;
+	
+	return true; // @todo: return collision success
 });
 
 Pawn.method('buffer', function(bufferContext){
-	bufferContext.beginPath();
-	var x              = Game.testPlayer.x; //Math.floor();
-	var y              = Game.testPlayer.y; //Math.floor();
-	var radius         = 20;
-	var startAngle     = 0;
-	var endAngle       = 2*Math.PI;
-	var anticlockwise  = false;
-	
-	bufferContext.arc(this.x,this.y,radius,startAngle,endAngle, anticlockwise);
-	bufferContext.closePath();
-	bufferContext.stroke();
+	if (!this.loaded)
+		return;
+		
+	bufferContext.drawImage( this.collisionImage, this.x, this.y);
 });
 
-function Config(shit) {
-    this._movePixelsPerTick = 1.0;
-}
-
-Config.method('movePixelsPerTick', function () {
-    return this._movePixelsPerTick;
+Pawn.method('tick', function(deltaMilliseconds){
+	if (!this.loaded)
+		return;
+		
+	// @todo: use RK4 or something for better physics
+	if (Game.bSimulatingPhysics){
+		var seconds = deltaMilliseconds / 1000;
+		
+		// ignore x for now
+		this.velocity.y += Config.gravity * seconds;
+		var deltaY = this.velocity.y * seconds;
+		
+		if ( !this.move( 0, deltaY) )
+			this.velocity.y = 0; // collided, so zero out velocity
+	}
 });

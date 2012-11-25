@@ -8,30 +8,40 @@
 	Game.tick is the main game loop. This checks input, updates actors, and renders
 	depending on which phase we're in (should totally have a matinee roll in announcing that)
 
-	Configuration and design notes
-	- global constants (and game tuning values eventually) are in index.html
+	Notes
+	- Global constants (and game tuning values eventually) are in index.html
 	
 	- var Classname   at the top of a file indicates a singleton class, a manager (Game, Map..)
 	- function Classname(param1[, param2]*)   at the top of a file indicates a class (see
 	  http://www.crockford.com/javascript/inheritance.html for the design pattern )
 	  
-	- collision is documented in the map class
+	- Variable prefixes:
+		b = boolean
+		i = integer
+		f = float
+		at = array of type t, t is another prefix
+		o = object (if no more specific identifier exists)
+		cvs = canvas
+		ctx = (canvas) context
+	- Try to use full words in variable names for clarity!
 */
 
 
 var Game = new function(){
-	this.currentPlayerIndex = 0;
-	this.players = [];
-	this.keyDown = [];
-	this.buffer = {};
-	this.bufferContext = {};
+	this.bSimulatingPhysics = false; // leave this off till phys fixed, for the love of god
+	this.iCurrentPlayer = 0;
+	this.fLastTickTime = 0; // milliseconds
+	this.aoPlayers = [];
+	this.cvsBuffer = {};
+	this.ctxBuffer = {};
+	this.oInput = {};
 	
 	this.init = function(){
 		debug("Initializing Game");
 		
 		// Create buffer (reduce flickering)
 		this.loadbuffer();
-		if (!this.bufferContext)
+		if (!this.ctxBuffer)
 			return;
 
 		// Bind the input handlers
@@ -45,10 +55,7 @@ var Game = new function(){
 		$(document).bind('keydown', keydownHandler);
 		
 		// Initialize game properties
-		Game.currentPlayerIndex = 0;
-		Game.players = [];
-		Game.projectiles = [];
-		Game.input = {
+		Game.oInput = {
 			// these correspond to triangular quarters of the screen (on mobile)
 			// (on pc, WASD and arrow keys map to the tri they point to)
 			left : false,
@@ -56,14 +63,9 @@ var Game = new function(){
 			top : false,
 			bottom : false
 		};
-		Game.testPlayer = {
-			x: VIEWPORT_WIDTH / 2.0,
-			y: VIEWPORT_HEIGHT / 2.0
+		for (var i = 0; i < 1; ++i){
+			Game.aoPlayers.push( new Pawn( "player_"+i ) );
 		}
-		for (var i = 0; i < 1; ++i) {
-			Game.players.push( new Pawn( "player_"+i ) );
-			console.log(Game.players[i].getName() + " created");
-;		}
 		
 		// CPU-efficient render loop http://nokarma.org/2011/02/02/javascript-game 
 		// -development-the-game-loop/index.html (must.. wrap.. lines)
@@ -84,16 +86,20 @@ var Game = new function(){
 			}
 		}
 		
+		// @TODO: only start game and rendering loop when all resources loaded
 		// Start the game loop
 		onEachFrame(Game.tick);
 	};
 	
 	this.loadbuffer = function(){
 		if (ctx) {
-			Game.buffer = document.createElement('canvas');
-			Game.buffer.width = VIEWPORT_WIDTH;
-			Game.buffer.height = VIEWPORT_HEIGHT;
-			Game.bufferContext = Game.buffer.getContext('2d');
+			Game.cvsBuffer = document.createElement('canvas');
+			Game.cvsBuffer.width = VIEWPORT_WIDTH;
+			Game.cvsBuffer.height = VIEWPORT_HEIGHT;
+			Game.ctxBuffer = Game.cvsBuffer.getContext('2d');
+		}
+		else {
+			console.log("ERROR: failed to load game buffer!");
 		}
 	};
 	
@@ -106,22 +112,22 @@ var Game = new function(){
 			case 87: // W
 			case 38: // Up
 				// @TODO add another onPress handler for "clicks"
-				Game.input.up = true;
+				Game.oInput.up = true;
 				break;
 
 			case 65: // A
 			case 37: // Left
-				Game.input.left = true;
+				Game.oInput.left = true;
 				break;
 
 			case 68: // D
 			case 39: // Right
-				Game.input.right = true;
+				Game.oInput.right = true;
 				break;
 
 			case 83: // S
 			case 40: // Down
-				Game.input.down = true;
+				Game.oInput.down = true;
 				break;
 		}
 	};
@@ -130,56 +136,76 @@ var Game = new function(){
 		switch (event.keyCode) {
 			case 87: // W
 			case 38: // Up
-				Game.input.up = false;
+				Game.oInput.up = false;
 				break;
 
 			case 65: // A
 			case 37: // Left
-				Game.input.left = false;
+				Game.oInput.left = false;
 				break;
 
 			case 68: // D
 			case 39: // Right
-				Game.input.right = false;
+				Game.oInput.right = false;
 				break;
 
 			case 83: // S
 			case 40: // Down
-				Game.input.down = false;
+				Game.oInput.down = false;
 				break;
+				
+			case 80: // P
+				break;
+			
+			//default:
+			//	alert(event.keyCode);
 		}
 	};
 
 	this.draw = function(){
-		Map.buffer(Game.bufferContext);
+		Map.buffer(Game.ctxBuffer);
 		
-		for (var i = 0; i < Game.players.length; ++i) {
-			Game.players[i].buffer(Game.bufferContext);
-;		}
+		ctx.drawImage(Game.cvsBuffer, 0, 0); // #rob is this what fixed transparency..?
+		
+		for (var i = 0; i < Game.aoPlayers.length; ++i){
+			Game.aoPlayers[i].buffer(Game.ctxBuffer);
+		}
 		
 		for (var i = 0; i < Game.projectiles; ++i) {
-			// projectiles[i].buffer(this.bufferContext);
+			// projectiles[i].buffer(this.ctxBuffer);
 		}
-		ctx.drawImage(Game.buffer, 0, 0);
+		
+		ctx.drawImage(Game.cvsBuffer, 0, 0);
 	};
 	
 	this.tick = function(){
+		if (this.fLastTickTime == 0){
+			// First tick
+			this.fLastTickTime = (new Date()).getMilliseconds();
+			return;
+		}
+		
+		var newTickTime= (new Date()).getMilliseconds();
+		var deltaMilliseconds = newTickTime - this.fLastTickTime;
+		this.fLastTickTime = newTickTime;
+		
+		// @todo: put movement only in a "move phase" or w/e once we have an actual engine going
 		var deltaX = 0.0, deltaY = 0.0;
-		if (Game.input.left)
-			deltaX -= 2; //Config.movePixelsPerTick();
-		if (Game.input.right)
-			deltaX += 2; //Config.movePixelsPerTick();
-		if (Game.input.up)
-			deltaY -= 2; //Config.movePixelsPerTick();
-		if (Game.input.down)
-			deltaY += 2; //Config.movePixelsPerTick();
+		if (Game.oInput.left)
+			deltaX -= Config.movePixelsPerTick;
+		if (Game.oInput.right)
+			deltaX += Config.movePixelsPerTick;
+		if (Game.oInput.up)
+			deltaY -= Config.movePixelsPerTick;
+		if (Game.oInput.down)
+			deltaY += Config.movePixelsPerTick;
 			
-		Game.players[Game.currentPlayerIndex].tryMove(deltaX, deltaY);
+		var bMoved = Game.aoPlayers[Game.iCurrentPlayer].move(deltaX, deltaY);
 		
+		for (var i = 0; i < Game.aoPlayers.length; ++i) {
+			Game.aoPlayers[i].tick(deltaMilliseconds);
+		}
 
-		// Map.tick; // @TODO: for gravity with collision checks
-		
-		
 		// Render
 		Game.draw();
 	}

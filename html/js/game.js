@@ -175,6 +175,7 @@ var Game = new function(){
 	};
 
 	this.draw = function(){
+        blank(CORNFLOWER_BLUE);
 		Map.buffer(Game.ctxBuffer);
 		
 		ctx.drawImage(Game.cvsBuffer, 0, 0); // #rob is this what fixed transparency..?

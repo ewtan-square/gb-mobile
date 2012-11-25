@@ -41,7 +41,7 @@ Pawn.method('getName', function(){
 // Returns true if the move succeeded, else false
 Pawn.method('move', function(deltaX, deltaY){
     // @todo: check for collision with the map
-    if(Map.canMove(this.x, this.y, deltaX, deltaY) ) {
+    if(Map.canMove(this.oCollisionImage, this.fX, this.fY, deltaX, deltaY) ) {
         this.fX += deltaX;
         this.fY += deltaY;
         return true
@@ -77,11 +77,4 @@ Pawn.method('tick', function(deltaMilliseconds){
 		if ( !this.move(0.0, deltaY) )
 			this.oVelocity.fY = 0.0;
 	}
-});
-function Config(shit) {
-    this._movePixelsPerTick = 1.0;
-}
-
-Config.method('movePixelsPerTick', function () {
-    return this._movePixelsPerTick;
 });

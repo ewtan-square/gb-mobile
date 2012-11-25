@@ -3,42 +3,52 @@
 var Map = new function(){
 	this.collisionMap = { loaded: false, blackAtXY: function(x,y) {} };
 
-    this.canMove = function(pawnImageData, x, y, dx, dy) {
-        //TODO: Remove this constraint
-        if ( dx > 1 || dy > 1 ) {
-            alert("Can only move pixel by pixel..for now.");
-        }
+    this.canMove = function(pawnImage, x, y, dx, dy) {
+        if ((dx === 0 && dy === 0) || (typeof pawnImage.naturalWidth != "undefined" && pawnImage.naturalWidth == 0))
+            return true;
 
-        //Put the image on the canvas in the original position
+        //TODO: Remove this constraint
+        //If step size is too large, there is danger of missed collisions
+        if ( dx > 2 || dy > 2 ) {
+            debug("Can only move 2 pixels at a time");
+            return false;
+        }
+        
         var canvas = document.createElement("canvas");
 		canvas.width = VIEWPORT_WIDTH;
 		canvas.height = VIEWPORT_HEIGHT;
-
 		var loadContext = canvas ? canvas.getContext('2d') : false;
  
 		if (Map.collisionMap.loaded) {
 			//Load collision map onto the canvas context
             loadContext.putImageData(Map.collisionMap.imageData, 0, 0);
-
             //Load pawn onto the canvas context
-            loadContext.putImageData(pawnImageData, x, y);
+            loadContext.drawImage(pawnImage, x, y);
 
-            //Count number of transparent pixels in the original position
-            var currentPawnData = loadContext.getImageData(x, y, pawnImageData.width, pawnImageData.height);
             //TODO: Form an array of the boundary pixels rather than the entire image
+            var currentPawnData = loadContext.getImageData(x, y, pawnImage.naturalWidth, pawnImage.naturalHeight);
+            //Count number of transparent pixels in the current position
             var currentPixelCount = this.countPixels(currentPawnData.data);
 
             loadContext.clearRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
-            var updatedPawnData = loadContext.getImageData(dx, dy, pawnImageData.width, pawnImageData.height);
+			
+            //Load collision map onto the canvas context
+            loadContext.putImageData(Map.collisionMap.imageData, 0, 0);
+            //Load pawn onto the canvas context
+            loadContext.drawImage(pawnImage, x+dx, y+dy);
+           
+            var updatedPawnData = loadContext.getImageData(x+dx, y+dy, pawnImage.naturalWidth, pawnImage.naturalHeight);
+            //Count number of transparent pixels in the updated position
             var updatedPixelCount = this.countPixels(updatedPawnData.data);
-
+            
+            //Number of transparent pixels change on collision
             if ( updatedPixelCount === currentPixelCount) {
                 return true;
             } else {
                 return false;
             }
         } else {
-            return false;
+            return true;
         }
     }
 
@@ -52,6 +62,7 @@ var Map = new function(){
                 count += 1;
             }
         }
+        return count;
     }
 
 	this.init = function(){

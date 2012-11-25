@@ -9,6 +9,7 @@ include("js/config.js");
 
 /* Classes */
 include("js/pawn.js");
+include("js/projectile.js");
 
 /* Singletons */
 include("js/game.js");

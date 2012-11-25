@@ -1,7 +1,7 @@
 
 
 function Pawn(name) {
-	debug("Initializing " + name);
+	debug("Initializing Pawn " + name);
 	
 	// Properties
 	this.bLoaded;
@@ -12,14 +12,12 @@ function Pawn(name) {
 	
 	// Initialization
 	this.setName(name);
-	
 	this.bLoaded = false;
+	
 	this.fX = VIEWPORT_WIDTH / 2.0;
 	this.fY = VIEWPORT_HEIGHT / 2.0;
 	
-	// NOTE: velocity, acceleration are still with respect to top-left origin
-	// (i.e. positive y velocity will move the actor "downwards" on-screen)
-	this.oVelocity = { fX: 0.0, fY: -370.0 };
+	this.oVelocity = { fX: 0.0, fY: -370.0 /*some high number to test phys a bit*/ };
 	
 	this.oCollisionImage = new Image();
 	
@@ -64,11 +62,15 @@ Pawn.method('tick', function(deltaMilliseconds){
 	if (Game.bSimulatingPhysics){
 		var seconds = deltaMilliseconds / 1000;
 		
-		// ignore x for now
 		this.oVelocity.fY += Config.gravity * seconds;
+		
+		var deltaX = this.oVelocity.fX * seconds;
 		var deltaY = this.oVelocity.fY * seconds;
 		
-		if ( !this.move( 0, deltaY) )
-			this.oVelocity.fY = 0; // collided, so zero out velocity
+		if ( !this.move(deltaX, 0.0) )
+			this.oVelocity.fX = 0.0;
+		
+		if ( !this.move(0.0, deltaY) )
+			this.oVelocity.fY = 0.0;
 	}
 });

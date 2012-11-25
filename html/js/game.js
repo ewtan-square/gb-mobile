@@ -11,9 +11,14 @@
 	Notes
 	- Global constants (and game tuning values eventually) are in index.html
 	
-	- var Classname   at the top of a file indicates a singleton class, a manager (Game, Map..)
-	- function Classname(param1[, param2]*)   at the top of a file indicates a class (see
+	- Class conventions:
+	  - var Classname   at the top of a file indicates a singleton class, a manager (Game, Map..)
+	  - function Classname(param1[, param2]*)   at the top of a file indicates a class (see
 	  http://www.crockford.com/javascript/inheritance.html for the design pattern )
+	  
+	- Movement:
+	  Everything is done with respect to the top-left origin, and positive y (movement, velocity,
+	  acceleration...) means DOWNWARD movement.
 	  
 	- Variable prefixes:
 		b = boolean
@@ -32,6 +37,7 @@ var Game = new function(){
 	this.iCurrentPlayer = 0;
 	this.fLastTickTime = 0; // milliseconds
 	this.aoPlayers = [];
+	this.aoProjectiles = [];
 	this.cvsBuffer = {};
 	this.ctxBuffer = {};
 	this.oInput = {};
@@ -155,8 +161,14 @@ var Game = new function(){
 				break;
 				
 			case 80: // P
+				this.bSimulatingPhysics = !this.bSimulatingPhysics;
 				break;
-			
+				
+			case 70: // F
+				Game.aoProjectiles.push( new Projectile( "testProjectile", -300.0, -200.0 ) );
+				
+				break;
+				
 			//default:
 			//	alert(event.keyCode);
 		}
@@ -171,8 +183,8 @@ var Game = new function(){
 			Game.aoPlayers[i].buffer(Game.ctxBuffer);
 		}
 		
-		for (var i = 0; i < Game.projectiles; ++i) {
-			// projectiles[i].buffer(this.ctxBuffer);
+		for (var i = 0; i < Game.aoProjectiles.length; ++i) {
+			Game.aoProjectiles[i].buffer(Game.ctxBuffer);
 		}
 		
 		ctx.drawImage(Game.cvsBuffer, 0, 0);
@@ -181,11 +193,11 @@ var Game = new function(){
 	this.tick = function(){
 		if (this.fLastTickTime == 0){
 			// First tick
-			this.fLastTickTime = (new Date()).getMilliseconds();
+			this.fLastTickTime = new Date().getTime();
 			return;
 		}
 		
-		var newTickTime= (new Date()).getMilliseconds();
+		var newTickTime= new Date().getTime();
 		var deltaMilliseconds = newTickTime - this.fLastTickTime;
 		this.fLastTickTime = newTickTime;
 		
@@ -204,6 +216,10 @@ var Game = new function(){
 		
 		for (var i = 0; i < Game.aoPlayers.length; ++i) {
 			Game.aoPlayers[i].tick(deltaMilliseconds);
+		}
+		
+		for (var i = 0; i < Game.aoProjectiles.length; ++i) {
+			Game.aoProjectiles[i].tick(deltaMilliseconds);
 		}
 
 		// Render

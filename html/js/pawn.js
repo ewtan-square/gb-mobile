@@ -2,24 +2,33 @@
 
 function Pawn(name) {
 	debug("Initializing " + name);
-	this.loaded = false;
-	this.simulatingPhysics = false;
-    this.setName(name);
-	this.x = VIEWPORT_WIDTH / 2.0;
-	this.y = VIEWPORT_HEIGHT / 2.0;
+	
+	// Properties
+	this.bLoaded;
+	this.fX;
+	this.fY;
+	this.oVelocity;
+	this.oCollisionImage;
+	
+	// Initialization
+	this.setName(name);
+	
+	this.bLoaded = false;
+	this.fX = VIEWPORT_WIDTH / 2.0;
+	this.fY = VIEWPORT_HEIGHT / 2.0;
 	
 	// NOTE: velocity, acceleration are still with respect to top-left origin
 	// (i.e. positive y velocity will move the actor "downwards" on-screen)
-	this.velocity = { x: 0.0, y: -370.0 };
+	this.oVelocity = { fX: 0.0, fY: -370.0 };
 	
-	this.collisionImage = new Image();
+	this.oCollisionImage = new Image();
 	
 	// load collision bounds image
 	var self = this;
-	this.collisionImage.onload = function(){
-		self.loaded = true;
+	this.oCollisionImage.onload = function(){
+		self.bLoaded = true;
 	};
-	this.collisionImage.src = 'assets/pawncollision.png';
+	this.oCollisionImage.src = 'assets/pawncollision.png';
 }
 
 Pawn.method('setName', function(name){
@@ -34,21 +43,21 @@ Pawn.method('getName', function(){
 // Returns true if the move succeeded, else false
 Pawn.method('move', function(deltaX, deltaY){
     // @todo: check for collision with the map
-	this.x += deltaX;
-	this.y += deltaY;
+	this.fX += deltaX;
+	this.fY += deltaY;
 	
 	return true; // @todo: return collision success
 });
 
 Pawn.method('buffer', function(bufferContext){
-	if (!this.loaded)
+	if (!this.bLoaded)
 		return;
 		
-	bufferContext.drawImage( this.collisionImage, this.x, this.y);
+	bufferContext.drawImage( this.oCollisionImage, this.fX, this.fY);
 });
 
 Pawn.method('tick', function(deltaMilliseconds){
-	if (!this.loaded)
+	if (!this.bLoaded)
 		return;
 		
 	// @todo: use RK4 or something for better physics
@@ -56,10 +65,10 @@ Pawn.method('tick', function(deltaMilliseconds){
 		var seconds = deltaMilliseconds / 1000;
 		
 		// ignore x for now
-		this.velocity.y += Config.gravity * seconds;
-		var deltaY = this.velocity.y * seconds;
+		this.oVelocity.fY += Config.gravity * seconds;
+		var deltaY = this.oVelocity.fY * seconds;
 		
 		if ( !this.move( 0, deltaY) )
-			this.velocity.y = 0; // collided, so zero out velocity
+			this.oVelocity.fY = 0; // collided, so zero out velocity
 	}
 });
